@@ -1,11 +1,11 @@
 
 # VANTAGE 
 
-**Verifiable Adversary-Resistant Network Transport & Group Exchange**
+### **Verifiable Adversary-Resistant Network Transport & Group Exchange (VANTAGE)**
 
-VANTAGE is a high-assurance, metadata-resistant chat system designed for hostile network environments. It routes all traffic exclusively through Tor Onion Services and uses a custom Noise Protocol implementation to guarantee mutual authentication, forward secrecy, and traffic analysis resistance.
+VANTAGE is a reliable chat system that resists metadata collection and is built for tough network situations. It sends all traffic only through Tor Onion Services and uses a custom Noise Protocol to ensure both parties confirm their identities, maintain privacy for future communications, and resist traffic analysis.
 
-Unlike standard encrypted messengers, VANTAGE is **serverless in design** (no central authority) but operational via a **Hub-and-Spoke** model, allowing you to self-host a private, invisible chat relay for your team.
+Unlike regular encrypted messaging apps, VANTAGE has no central server. Instead, it operates using a Hub-and-Spoke model, which lets you set up your own private, hidden chat relay for your team.
 
 ---
 
