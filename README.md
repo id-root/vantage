@@ -1,10 +1,9 @@
-
 <p align="center">
   <a href="https://www.rust-lang.org/">
     <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
   </a>
   <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/version-3.0.0-black.svg" alt="Version 3.0.0">
+    <img src="https://img.shields.io/badge/version-3.1.0-black.svg" alt="Version 3.1.0">
   </a>
   <a href="https://github.com/id-root/vantage/actions">
     <img src="https://github.com/id-root/vantage/actions/workflows/rust.yml/badge.svg" alt="Build Status">
@@ -17,7 +16,6 @@
   </a>
 </p>
 
-
 # VANTAGE 
 <table>
   <tr>
@@ -26,13 +24,15 @@
     </td>
     <td>
 
-### **Verifiable Adversary-Resistant Network Transport & Group Exchange (VANTAGE)**
+### **Verifiable Adversary-Resistant Network Transport & Group Exchange**
 
-VANTAGE is a metadata-resistant chat system designed for hostile network environments. All communication is routed exclusively through Tor Onion Services and secured with a Noise Protocol–based transport providing mutual authentication, forward secrecy, and resistance to traffic analysis.
+VANTAGE is a metadata-resistant chat and file-sharing system designed for hostile network environments. It routes all traffic exclusively through **Tor Onion Services** and secures it with a **Noise Protocol** transport.
 
-Unlike conventional encrypted messaging platforms, VANTAGE has no central authority. It operates via a self-hosted, anonymous hub-and-spoke relay model, enabling private team communication without exposing network identities.
+* **Secure TUI:** A full Terminal User Interface dashboard.
+* **Stealth File Transfer:** Send files masquerading as chat traffic.
+* **Offer/Accept Protocol:** Prevents unconsented drive-by downloads.
 
-
+    </td>
   </tr>
 </table>
 
@@ -42,33 +42,32 @@ Unlike conventional encrypted messaging platforms, VANTAGE has no central author
 
 ### 1. The Anonymity Layer (Tor)
 VANTAGE does not use IP addresses. It binds strictly to **Tor Hidden Services (v3 Onion Addresses)**.
-* **No Port Forwarding:** Works behind firewalls, NATs, and carrier-grade mobile networks.
 * **Location Hiding:** The physical location of the Hub is hidden from Clients, and Clients are hidden from the Hub.
-* **End-to-End Encryption:** Tor provides the first layer of encryption for the transport.
+* **NAT Traversal:** Works behind strict firewalls and carrier-grade NAT without port forwarding.
 
 ### 2. The Application Layer (Noise Protocol)
 Inside the Tor tunnel, VANTAGE establishes a second, independent encrypted tunnel using the **Noise Protocol Framework**.
-* **Handshake:** `Noise_XX_25519_ChaChaPoly_BLAKE2b`
-    * **XX Pattern:** Mutual authentication. Both Client and Hub prove their identity before any data is exchanged.
-    * **25519:** Curve25519 for Diffie-Hellman key exchange.
-    * **ChaChaPoly:** ChaCha20-Poly1305 for authenticated encryption.
-    * **BLAKE2b:** Hashing algorithm for keys.
-* **Zeroization:** Private keys are marked with the `Zeroize` trait, ensuring they are wiped from memory immediately upon drop to prevent cold-boot attacks.
+* **Handshake:** `Noise_XX_25519_ChaChaPoly_BLAKE2b` (Mutual Authentication).
+* **Zeroization:** Keys are wiped from memory immediately upon drop to prevent cold-boot attacks.
 
 ### 3. Traffic Analysis Resistance
 Standard encryption hides *what* you say, but not *how much* you say. VANTAGE defeats packet size analysis.
-* **Constant-Rate Padding:** Every single packet sent over the wire is padded to exactly **4096 bytes**.
-* **Obfuscation:** An observer (ISP or compromised node) cannot distinguish between a short "Hi", a long paragraph, or a handshake packet. They all look identical.
+* **Constant-Rate Padding:** Every packet (Chat, System, or File Chunk) is padded to exactly **4096 bytes**.
+* **Obfuscation:** An observer cannot distinguish between a text message and a file transfer segment.
+
+### 4. Secure File Transfer
+* **Chunking:** Files are split into small encrypted chunks and interleaved with chat traffic.
+* **Consent First:** Files are never automatically downloaded. The receiver must explicitly authorize the download via the `/get` command.
+* **Sanitization:** Filenames are sanitized to prevent directory traversal attacks.
 
 ---
 
 ## 🛠️ Prerequisites
 
-Before installing, ensure you have the following:
-
 1.  **Tor Background Service:** (Must be running on system port 9050)
-    * Debian/Ubuntu: `sudo apt install tor`
+    * Debian/Ubuntu/Kali: `sudo apt install tor`
     * Arch: `sudo pacman -S tor`
+    * *Ensure the service is active:* `sudo systemctl start tor`
 
 2.  **Rust Toolchain:**
     * Install via: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
@@ -95,13 +94,12 @@ Before installing, ensure you have the following:
 To host a chat group, you must configure a Tor Hidden Service on the server machine.
 
 1.  **Edit Tor Config (`/etc/tor/torrc`):**
-    Add these two lines to the bottom of the file:
     ```text
     HiddenServiceDir /var/lib/tor/vantage_hub/
     HiddenServicePort 7878 127.0.0.1:7878
     ```
 
-2.  **Start Tor:**
+2.  **Restart Tor:**
     ```bash
     sudo systemctl enable tor
     sudo systemctl start tor
@@ -111,7 +109,6 @@ To host a chat group, you must configure a Tor Hidden Service on the server mach
     ```bash
     sudo cat /var/lib/tor/vantage_hub/hostname
     ```
-    *Save/copy this address (e.g., `yw4...xyz.onion`). You will share this with your users.*
 
 ---
 
@@ -125,11 +122,7 @@ Run this on the machine hosting the Hidden Service.
 
 ```
 
-* **Identity:** A persistent identity file (`vantage.id`) is created automatically.
-* **Fingerprint:** The server will display a Base64 fingerprint. **Share this with your users.**
 > `🚀 Server Online. Fingerprint: vKfD+dDX5BSKtkhP31YiL09tM0lopzuHvwZggc094=`
-
-
 
 ### 2. Connect a User (Client)
 
@@ -143,39 +136,78 @@ Users connect using the Onion Address and the Hub's Fingerprint.
 
 ```
 
-* **Verify:** If the server fingerprint does not match, the client will abort immediately to prevent Man-in-the-Middle (MITM) attacks.
-* **Chat:** Once connected, type messages and press Enter. Messages are encrypted, sent to the Hub, and broadcast to all other connected users.
+### 3. TUI Controls & Commands
+
+Once connected, you will see the VANTAGE Dashboard.
+
+| Command | Description |
+| --- | --- |
+| **Esc** | Quit VANTAGE safely. |
+| `/send <path>` | Offer a file to the group. |
+| `/get <id>` | Accept and download a file. |
+| `/quit` | Disconnect. |
+
+---
+
+## 📎 File Transfer Guide
+
+VANTAGE uses an **Offer/Accept** model for security.
+
+**1. Sender Offers a File**
+Alice wants to send a photo. She types:
+
+```text
+/send /home/alice/secrets.pdf
+
+```
+
+* **Result:** The group sees: `📎 Alice offered 'secrets.pdf' (ID: 4921).`
+
+**2. Receiver Accepts the File**
+Bob wants the file. He types the ID shown in the offer:
+
+```text
+/get 4921
+```
+
+* **Result:** The system begins streaming the file securely.
+
+**3. Download Complete**
+The file is saved automatically to the `downloads/` folder in your current directory.
+
+> `✅ File Saved: downloads/secrets.bin`
+ 
+*Why are files saved as .bin? Files are saved with generic IDs (e.g., file_8291.bin) as a security fail-safe to prevent Directory Traversal Attacks. VANTAGE ignores the remote filename during the write process to ensure a malicious peer cannot overwrite your system files (e.g., sending a file named ../../.bashrc). Users must manually rename files after verifying their safety.*
 
 ---
 
 ## ❓ Troubleshooting
 
-**Error: SOCKS5 connection failed**
+**Error: Connection failed / SOCKS5 error**
 
-* Is Tor running? (`systemctl status tor`)
-* Is Tor listening on port 9050? (`ss -nltp | grep 9050`)
-* If you changed Tor's port, update the `--proxy` argument.
+* Is Tor running? `systemctl status tor`
+* Is Tor listening on port 9050? `ss -nltp | grep 9050`
 
-**Error: Decrypt error / Protocol Mismatch**
+**Error: "Fingerprint Mismatch"**
 
-* Ensure both Server and Client are running the exact same version of VANTAGE.
-* Ensure you strictly updated the `network.rs` code to include the Length-Prefix framing fix (v3.0).
+* **STOP.** The server you reached is NOT the one you expected. This indicates a potential Man-in-the-Middle attack or a typo in your command.
 
-**Fingerprint Mismatch**
+**Where are my files?**
 
-* **STOP.** Do not connect. This means the Onion Address you are connecting to is NOT serving the key you expect. It could be a typo, or an adversary has hijacked the address.
+* Check the `downloads` folder created where you ran the binary.
+
+
 
 ---
 
 ## 🤝 Contributing
 
-**Have an idea to make VANTAGE better?**
-
-This project is open-source and thrives on community contributions. Whether you want to add file transfer support, a GUI, or improve the crypto implementation, we welcome your pull requests!
+This project is open-source. Whether you want to add voice support, improve the TUI , or audit the crypto implementation, we welcome your pull requests!
 
 1. Fork the repository.
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
 3. Commit your changes.
 4. Open a Pull Request.
 
-*Let's experience the cyberspace*
+*Let's experience the cyberspace.*
+
