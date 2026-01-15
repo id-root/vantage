@@ -2,6 +2,9 @@
 name = "vantage"
 version = "3.0.0"
 edition = "2021"
+authors = ["id-root advent007@duck.com"]
+license = "MIT"
+description = "A Verifiable Adversary-Resistant Network Transport over Tor"
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
