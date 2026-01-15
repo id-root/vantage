@@ -1,7 +1,7 @@
-use snow::{Builder, Keypair, TransportState, HandshakeState};
+use snow::{Builder, TransportState, HandshakeState};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 use serde::{Serialize, Deserialize};
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use anyhow::{Result, Context, bail};
@@ -109,3 +109,4 @@ impl NoiseSession {
         Ok(self.buf[..len].to_vec())
     }
 }
+  
