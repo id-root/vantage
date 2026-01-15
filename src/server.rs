@@ -1,6 +1,6 @@
 use crate::crypto::{Identity, NoiseSession};
 use crate::protocol::{VantagePacket, WireMessage};
-use crate::network::{read_len_prefixed, write_len_prefixed}; // Import helpers
+use crate::network::{read_len_prefixed, write_len_prefixed};
 use crate::{WIRE_PACKET_SIZE, HANDSHAKE_TIMEOUT_SEC, READ_TIMEOUT_SEC};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::broadcast;
@@ -16,7 +16,6 @@ use blake3::Hasher;
 use chrono::Utc;
 
 pub async fn run(port: u16, identity_path: String) -> Result<()> {
-    // ... (This part stays the same as before) ...
     let id = Identity::load_or_create(&identity_path)?;
     info!("🚀 Server Online. Fingerprint: {}", id.fingerprint());
 
@@ -50,20 +49,17 @@ async fn handle_client(
     mut rx: broadcast::Receiver<WireMessage>,
     users: Arc<DashMap<String, String>>,
 ) -> Result<()> {
-    // --- 1. Handshake (Framed) ---
+    // 1. Handshake
     let builder = Builder::new("Noise_XX_25519_ChaChaPoly_BLAKE2b".parse()?);
     let mut handshake = builder.local_private_key(&id.keypair.private).build_responder()?;
     let mut buf = vec![0u8; 65535];
 
-    // <- e
     let msg = timeout(Duration::from_secs(HANDSHAKE_TIMEOUT_SEC), read_len_prefixed(&mut stream)).await??;
     handshake.read_message(&msg, &mut buf)?;
     
-    // -> e, ee, s, es
     let len = handshake.write_message(&[], &mut buf)?;
     write_len_prefixed(&mut stream, &buf[..len]).await?;
     
-    // <- s, se
     let msg = timeout(Duration::from_secs(HANDSHAKE_TIMEOUT_SEC), read_len_prefixed(&mut stream)).await??;
     handshake.read_message(&msg, &mut buf)?;
 
@@ -73,9 +69,8 @@ async fn handle_client(
     let mut h = Hasher::new(); h.update(&remote_static);
     let fp = BASE64_STANDARD.encode(h.finalize().as_bytes());
 
-    // --- 2. Auth/Join ---
-    // ... (This part stays the same as before) ...
-    let mut username = String::new();
+    // 2. Auth/Join
+    let username: String; // Fixed: Declare without assigning dummy value
     {
         let mut wire_buf = vec![0u8; WIRE_PACKET_SIZE];
         timeout(Duration::from_secs(READ_TIMEOUT_SEC), stream.read_exact(&mut wire_buf)).await??;
@@ -93,7 +88,7 @@ async fn handle_client(
         }
     }
 
-    // --- 3. Chat Loop ---
+    // 3. Chat Loop
     let (mut reader, mut writer) = stream.into_split();
     let sess_read = session.clone();
     let sess_write = session.clone();
@@ -110,13 +105,34 @@ async fn handle_client(
             let res = { sess_read.lock().unwrap().decrypt(&wire) };
             if let Ok(plain) = res {
                 if let Ok(pkt) = VantagePacket::from_bytes(&plain) {
-                    if let Ok(WireMessage::Chat { content, .. }) = serde_json::from_slice(&pkt.payload) {
-                        let msg = WireMessage::Chat { 
-                            sender: my_username.clone(), 
-                            content, 
-                            timestamp: Utc::now() 
-                        };
-                        let _ = tx_inner.send(msg);
+                    if let Ok(msg) = serde_json::from_slice::<WireMessage>(&pkt.payload) {
+                        // Forward all messages (Chat, FileOffer, etc) to broadcast
+                        // But enforce sender username validation
+                        match msg {
+                            WireMessage::Chat { content, .. } => {
+                                let _ = tx_inner.send(WireMessage::Chat { 
+                                    sender: my_username.clone(), 
+                                    content, 
+                                    timestamp: Utc::now() 
+                                });
+                            },
+                            // Allow File protocol messages to pass through
+                            WireMessage::FileOffer { file_name, file_size, id, .. } => {
+                                let _ = tx_inner.send(WireMessage::FileOffer { 
+                                    sender: my_username.clone(), file_name, file_size, id 
+                                });
+                            },
+                            WireMessage::FileRequest { file_id, receiver } => {
+                                // Only allow request if receiver name matches logged in user
+                                if receiver == my_username {
+                                    let _ = tx_inner.send(WireMessage::FileRequest { file_id, receiver });
+                                }
+                            },
+                            WireMessage::FileChunk { file_id, chunk_index, total_chunks, data } => {
+                                let _ = tx_inner.send(WireMessage::FileChunk { file_id, chunk_index, total_chunks, data });
+                            },
+                            _ => {}
+                        }
                     }
                 }
             } else { break; }
@@ -130,6 +146,7 @@ async fn handle_client(
             Ok(msg) => {
                 let should_send = match &msg {
                     WireMessage::Chat { sender, .. } => sender != &username,
+                    WireMessage::FileOffer { sender, .. } => sender != &username,
                     _ => true,
                 };
 
