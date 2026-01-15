@@ -3,7 +3,7 @@
     <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
   </a>
   <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/version-3.1.0-black.svg" alt="Version 3.1.0">
+    <img src="https://img.shields.io/badge/version-3.0-black.svg" alt="Version 3.1.0">
   </a>
   <a href="https://github.com/id-root/vantage/actions">
     <img src="https://github.com/id-root/vantage/actions/workflows/rust.yml/badge.svg" alt="Build Status">
@@ -67,7 +67,7 @@ Standard encryption hides *what* you say, but not *how much* you say. VANTAGE de
 1.  **Tor Background Service:** (Must be running on system port 9050)
     * Debian/Ubuntu/Kali: `sudo apt install tor`
     * Arch: `sudo pacman -S tor`
-    * *Ensure the service is active:* `sudo systemctl start tor`
+   
 
 2.  **Rust Toolchain:**
     * Install via: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
@@ -142,7 +142,7 @@ Once connected, you will see the VANTAGE Dashboard.
 
 | Command | Description |
 | --- | --- |
-| **Esc** | Quit VANTAGE safely. |
+| `Esc` | Quit VANTAGE safely. |
 | `/send <path>` | Offer a file to the group. |
 | `/get <id>` | Accept and download a file. |
 | `/quit` | Disconnect. |
