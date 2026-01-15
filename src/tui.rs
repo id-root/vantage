@@ -59,7 +59,7 @@ pub fn ui(f: &mut Frame, app: &AppState) {
     let input = Paragraph::new(app.input.value())
         .style(Style::default().fg(Color::Yellow))
         .scroll((0, scroll as u16))
-        .block(Block::default().borders(Borders::ALL).title(" Message (Enter to send, /send <path> for files) "));
+        .block(Block::default().borders(Borders::ALL).title(" Message (Enter to send, /nuke for kill switch) "));
     
     f.render_widget(input, chunks[1]);
     
