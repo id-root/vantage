@@ -1,11 +1,10 @@
 use serde::{Serialize, Deserialize};
-use crate::{WIRE_PACKET_SIZE, PLAINTEXT_SIZE};
+use crate::PLAINTEXT_SIZE;
 use anyhow::{Result, bail};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha12Rng;
 use chrono::{DateTime, Utc};
 
-// The encrypted container sent over TCP
 #[derive(Serialize, Deserialize)]
 pub struct VantagePacket {
     pub payload: Vec<u8>,
@@ -13,26 +12,44 @@ pub struct VantagePacket {
     pub padding: Vec<u8>,
 }
 
-// The internal message structure (Payload)
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum WireMessage {
     Join { 
         username: String 
     },
     Chat { 
-        sender: String, // Username
+        sender: String,
         content: String,
         timestamp: DateTime<Utc>
     },
     System {
         content: String
     },
+    // --- FILE TRANSFER PROTOCOL ---
+    // 1. Sender broadcasts this
+    FileOffer {
+        sender: String,
+        file_name: String,
+        file_size: u64,
+        id: u32,
+    },
+    // 2. Receiver sends this to say "Yes"
+    FileRequest {
+        receiver: String,
+        file_id: u32,
+    },
+    // 3. Sender streams these
+    FileChunk {
+        file_id: u32,
+        chunk_index: u32,
+        total_chunks: u32,
+        data: Vec<u8>,
+    }
 }
 
 impl VantagePacket {
     pub fn new(payload: &[u8]) -> Result<Self> {
         let mut rng = ChaCha12Rng::from_entropy();
-        // Overhead: 32 bytes nonce + ~8 bytes Vec len + ~8 bytes padding len
         let overhead = 64; 
         
         if payload.len() + overhead > PLAINTEXT_SIZE {
@@ -50,7 +67,6 @@ impl VantagePacket {
 
     pub fn to_bytes(&self) -> Result<Vec<u8>> {
         let mut data = bincode::serialize(self)?;
-        // Enforce exact wire size
         if data.len() < PLAINTEXT_SIZE {
             data.resize(PLAINTEXT_SIZE, 0);
         } else if data.len() > PLAINTEXT_SIZE {
