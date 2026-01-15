@@ -79,7 +79,7 @@ Before installing, ensure you have the following:
 
 1.  **Clone & Build:**
     ```bash
-    git clone [https://github.com/id-root/vantage.git](https://github.com/id-root/vantage.git)
+    git clone https://github.com/id-root/vantage.git
     cd vantage
     cargo build --release
     ```
