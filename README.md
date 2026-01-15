@@ -178,4 +178,4 @@ This project is open-source and thrives on community contributions. Whether you 
 3. Commit your changes.
 4. Open a Pull Request.
 
-*Together, we can build a more private web.*
+*Let's experience the cyberspace*
