@@ -1,4 +1,23 @@
 
+<p align="center">
+  <a href="https://www.rust-lang.org/">
+    <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
+  </a>
+  <a href="https://github.com/id-root/vantage">
+    <img src="https://img.shields.io/badge/version-3.0.0-black.svg" alt="Version 3.0.0">
+  </a>
+  <a href="https://github.com/id-root/vantage/actions">
+    <img src="https://github.com/id-root/vantage/actions/workflows/rust.yml/badge.svg" alt="Build Status">
+  </a>
+  <a href="https://github.com/id-root/vantage">
+    <img src="https://img.shields.io/badge/Security-Experimental-black" alt="Security Status">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-black.svg" alt="License: MIT">
+  </a>
+</p>
+
+
 # VANTAGE 
 
 ### **Verifiable Adversary-Resistant Network Transport & Group Exchange (VANTAGE)**
