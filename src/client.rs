@@ -21,17 +21,52 @@ use chrono::Utc;
 
 // TUI Imports
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers}, // Added KeyModifiers
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 use tui_input::backend::crossterm::EventHandler;
 
-// Internal Events to coordinate UI, Network, and Logic
+// Internal Events
 enum InternalEvent {
     NetworkMessage(WireMessage),
     Input(String),
+}
+
+// --- 🚨 PANIC BUTTON LOGIC 🚨 ---
+fn nuke_everything(identity_path: &str) {
+    // 1. Overwrite and Delete Identity Key
+    if let Ok(metadata) = fs::metadata(identity_path) {
+        let len = metadata.len();
+        if let Ok(mut file) = OpenOptions::new().write(true).open(identity_path) {
+            let zeros = vec![0u8; len as usize];
+            let _ = file.write_all(&zeros);
+            let _ = file.sync_all(); // Force write to disk
+        }
+        let _ = fs::remove_file(identity_path);
+    }
+
+    // 2. Overwrite and Delete Downloads
+    if let Ok(entries) = fs::read_dir("downloads") {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Ok(metadata) = fs::metadata(&path) {
+                    let len = metadata.len();
+                    if let Ok(mut file) = OpenOptions::new().write(true).open(&path) {
+                        // Overwrite file content with zeros
+                        // (In a real scenario, you might do this 3-7 times with random data)
+                        let zeros = vec![0u8; len as usize]; 
+                        let _ = file.write_all(&zeros);
+                        let _ = file.sync_all();
+                    }
+                }
+                let _ = fs::remove_file(path);
+            }
+        }
+        let _ = fs::remove_dir_all("downloads");
+    }
 }
 
 pub async fn run(
@@ -105,13 +140,13 @@ pub async fn run(
     
     // --- MAIN LOGIC ---
     let (mut reader, mut writer) = stream.into_split();
-    let (tx_net, mut rx_net) = mpsc::channel::<WireMessage>(100); // Outgoing to Network
-    let (tx_logic, mut rx_logic) = mpsc::channel::<InternalEvent>(100); // Internal Logic Bus
+    let (tx_net, mut rx_net) = mpsc::channel::<WireMessage>(100); 
+    let (tx_logic, mut rx_logic) = mpsc::channel::<InternalEvent>(100); 
 
     let sess_read = session.clone();
     let sess_write = session.clone();
     
-    // 1. Network Reader (Incoming -> Logic)
+    // 1. Network Reader 
     let tx_logic_net = tx_logic.clone();
     tokio::spawn(async move {
         let mut wire = [0u8; WIRE_PACKET_SIZE];
@@ -128,7 +163,7 @@ pub async fn run(
         }
     });
 
-    // 2. Network Writer (Logic -> Outgoing)
+    // 2. Network Writer
     tokio::spawn(async move {
         while let Some(msg) = rx_net.recv().await {
             if let Ok(json) = serde_json::to_vec(&msg) {
@@ -146,13 +181,14 @@ pub async fn run(
 
     // 4. MAIN STATE LOOP
     let mut upload_queue: HashMap<u32, PathBuf> = HashMap::new();
-    let mut download_whitelist: HashSet<u32> = HashSet::new(); // IDs we agreed to download
-    let mut active_downloads: HashMap<u32, (String, u32)> = HashMap::new(); // ID -> (Name, Progress)
+    let mut download_whitelist: HashSet<u32> = HashSet::new();
+    let mut active_downloads: HashMap<u32, (String, u32)> = HashMap::new(); 
+    let mut pending_offers: HashMap<u32, String> = HashMap::new(); 
 
     loop {
         terminal.draw(|f| ui(f, &app))?;
 
-        // A. Handle User Input (Non-blocking check)
+        // A. Handle User Input
         if crossterm::event::poll(Duration::from_millis(10))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
@@ -163,7 +199,19 @@ pub async fn run(
                             app.input.reset();
                         }
                     },
-                    KeyCode::Esc => break, // Exit
+                    // 🚨 PANIC TRIGGER: Ctrl + X
+                    KeyCode::Char('x') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        // Cleanup Terminal first so we see the final message
+                        disable_raw_mode()?;
+                        execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
+                        terminal.show_cursor()?;
+                        
+                        println!("\n\x1b[31;1m🚨 PANIC INITIATED. NUKING DATA...\x1b[0m");
+                        nuke_everything(&identity);
+                        println!("\x1b[31m💥 SYSTEM CLEANED. GOODBYE.\x1b[0m");
+                        std::process::exit(0);
+                    },
+                    KeyCode::Esc => break, 
                     _ => { 
                         app.input.handle_event(&Event::Key(key)); 
                     }
@@ -174,7 +222,6 @@ pub async fn run(
         // B. Handle Logic Events
         if let Ok(event) = rx_logic.try_recv() {
             match event {
-                // --- USER TYPED SOMETHING ---
                 InternalEvent::Input(cmd) => {
                     if cmd.starts_with("/send ") {
                         let path_str = cmd.trim_start_matches("/send ");
@@ -207,6 +254,13 @@ pub async fn run(
                         }
                     } else if cmd == "/quit" {
                         break;
+                    } else if cmd == "/nuke" {
+                         // Alternative Text Trigger for Panic
+                         disable_raw_mode()?;
+                         execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
+                         println!("\n\x1b[31;1m🚨 PANIC INITIATED VIA COMMAND.\x1b[0m");
+                         nuke_everything(&identity);
+                         std::process::exit(0);
                     } else {
                         app.messages.push(format!("[You] {}", cmd));
                         tx_net.send(WireMessage::Chat {
@@ -217,12 +271,10 @@ pub async fn run(
                     }
                 },
 
-                // --- NETWORK MESSAGE ARRIVED ---
                 InternalEvent::NetworkMessage(msg) => {
                     match msg {
-                        // FIX: Added missing Join handler
                         WireMessage::Join { username } => {
-                            app.messages.push(format!("[*] {} joined the channel", username));
+                            app.messages.push(format!("[*] {} joined", username));
                         },
                         WireMessage::Chat { sender, content, .. } => {
                             app.messages.push(format!("[{}] {}", sender, content));
@@ -232,13 +284,15 @@ pub async fn run(
                         },
                         WireMessage::FileOffer { sender, file_name, file_size, id } => {
                             if sender != username {
-                                app.messages.push(format!("📎 {} offered '{}' ({} bytes).", sender, file_name, file_size));
+                                let safe_name = Path::new(&file_name).file_name().unwrap_or_default().to_string_lossy().into_owned();
+                                pending_offers.insert(id, safe_name.clone());
+                                app.messages.push(format!("📎 {} offered '{}' ({} bytes).", sender, safe_name, file_size));
                                 app.messages.push(format!("   Type '/get {}' to download.", id));
                             }
                         },
                         WireMessage::FileRequest { file_id, receiver } => {
                             if let Some(path) = upload_queue.get(&file_id) {
-                                app.messages.push(format!("🚀 {} accepted file. Sending...", receiver));
+                                app.messages.push(format!("🚀 {} accepted. Sending...", receiver));
                                 
                                 if let Ok(mut file) = File::open(path) {
                                     let mut buffer = Vec::new();
@@ -266,7 +320,8 @@ pub async fn run(
                         WireMessage::FileChunk { file_id, chunk_index, total_chunks, data } => {
                             if download_whitelist.contains(&file_id) {
                                 if !active_downloads.contains_key(&file_id) {
-                                    active_downloads.insert(file_id, (format!("file_{}.bin", file_id), 0));
+                                    let name = pending_offers.get(&file_id).cloned().unwrap_or_else(|| format!("file_{}.bin", file_id));
+                                    active_downloads.insert(file_id, (name, 0));
                                 }
                                 
                                 if let Some((name, progress)) = active_downloads.get_mut(&file_id) {
