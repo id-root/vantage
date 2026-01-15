@@ -145,6 +145,7 @@ Once connected, you will see the VANTAGE Dashboard.
 | `Esc` | Quit VANTAGE safely. |
 | `/send <path>` | Offer a file to the group. |
 | `/get <id>` | Accept and download a file. |
+| `/nuke or Ctrl + x`| Activate Kill switch|
 | `/quit` | Disconnect. |
 
 ---
