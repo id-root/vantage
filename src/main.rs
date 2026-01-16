@@ -1,10 +1,25 @@
 use clap::{Parser, Subcommand};
-use vantage::{server, client, crypto::Identity};
 use anyhow::Result;
-use tracing_subscriber;
+
+mod client;
+mod server;
+mod network;
+mod crypto;
+mod protocol;
+mod tui;
+
+// Global constants
+pub const WIRE_PACKET_SIZE: usize = 4096;
+pub const PQ_TAG_SIZE: usize = 16; 
+pub const PLAINTEXT_SIZE: usize = 4064; 
+pub const HANDSHAKE_TIMEOUT_SEC: u64 = 30;
+pub const READ_TIMEOUT_SEC: u64 = 300;
+pub const DEFAULT_SOCKS_PROXY: &str = "127.0.0.1:9050";
+pub const DEFAULT_ID_FILE: &str = "vantage.id";
 
 #[derive(Parser)]
-#[command(name = "vantage", version = "3.0")]
+#[command(name = "vantage")]
+#[command(about = "VANTAGE: Post-Quantum Secure Chat over Tor", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -12,53 +27,49 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate a persistent identity
-    GenKey {
-        #[arg(short, long, default_value = "vantage.id")]
-        output: String,
-    },
-    /// Start the VANTAGE Hub Server
+    /// Start in Server (Listener) Mode
     Server {
-        #[arg(long, default_value_t = 7878)]
+        #[arg(short, long, default_value_t = 7878)]
         port: u16,
-        #[arg(long, default_value = "vantage.id")]
+        #[arg(long, default_value = DEFAULT_ID_FILE)]
         identity: String,
     },
-    /// Connect to a VANTAGE Hub
+    /// Start in Client (Connect) Mode
     Client {
-        #[arg(long)]
+        #[arg(short, long)]
         address: String,
-        #[arg(long)]
+        #[arg(short, long)]
         username: String,
-        #[arg(long)]
+        #[arg(short, long)]
         peer_fingerprint: String,
-        #[arg(long, default_value = "127.0.0.1:9050")]
+        #[arg(long, default_value = DEFAULT_SOCKS_PROXY)]
         proxy: String,
-        #[arg(long, default_value = "vantage.id")]
+        #[arg(long, default_value = DEFAULT_ID_FILE)]
         identity: String,
+        #[arg(short, long, default_value = "public")]
+        group: String,
+        
+        // Temp Flag for Auto-Generation
+        #[arg(long)]
+        temp: bool,
     },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize logging
     tracing_subscriber::fmt::init();
-    
+
     let cli = Cli::parse();
-    
+
     match cli.command {
-        Commands::GenKey { output } => {
-            let id = Identity::generate()?;
-            id.save(&output)?;
-            println!("✅ Identity generated: {}", output);
-            println!("🔑 Fingerprint: {}", id.fingerprint());
-        }
         Commands::Server { port, identity } => {
             server::run(port, identity).await?;
         }
-        Commands::Client { address, username, peer_fingerprint, proxy, identity } => {
-            client::run(address, username, peer_fingerprint, proxy, identity).await?;
+        Commands::Client { address, username, peer_fingerprint, proxy, identity, group, temp } => {
+            client::run(address, username, peer_fingerprint, proxy, identity, group, temp).await?;
         }
     }
-    
+
     Ok(())
 }
