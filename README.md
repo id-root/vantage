@@ -3,20 +3,20 @@
     <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
   </a>
   <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/version-3.0-black.svg" alt="Version 3.1.0">
+    <img src="https://img.shields.io/badge/version-3.0.0-black.svg" alt="Version 3.0.0">
   </a>
   <a href="https://github.com/id-root/vantage/actions">
     <img src="https://github.com/id-root/vantage/actions/workflows/rust.yml/badge.svg" alt="Build Status">
   </a>
   <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/Security-Experimental-black" alt="Security Status">
+    <img src="https://img.shields.io/badge/Security-Post--Quantum-blueviolet" alt="Security Status">
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-black.svg" alt="License: MIT">
   </a>
 </p>
 
-# VANTAGE 
+# VANTAGE
 <table>
   <tr>
     <td width="280" align="right">
@@ -26,11 +26,13 @@
 
 ### **Verifiable Adversary-Resistant Network Transport & Group Exchange**
 
-VANTAGE is a metadata-resistant chat and file-sharing system designed for hostile network environments. It routes all traffic exclusively through **Tor Onion Services** and secures it with a **Noise Protocol** transport.
+VANTAGE is a metadata-resistant, post-quantum secure messaging system designed for hostile network environments. It routes all traffic exclusively through **Tor Onion Services** and secures it with a hybrid cryptographic stack combining **Noise Protocol** and **Kyber-1024**.
 
-* **Secure TUI:** A full Terminal User Interface dashboard.
-* **Stealth File Transfer:** Send files masquerading as chat traffic.
-* **Offer/Accept Protocol:** Prevents unconsented drive-by downloads.
+* **🛡️ Post-Quantum Security:** Native Kyber-1024 Key Encapsulation.
+* **🧅 Tor Native:** Operates exclusively over Tor Hidden Services.
+* **💬 Group Channels:** Support for partitioned topics (e.g., `#ops`, `#general`).
+* **👻 Traffic Masking:** Constant-rate packet padding (4096 bytes).
+* **🚨 Panic Switch:** Instantly wipe keys and data with a single keystroke.
 
     </td>
   </tr>
@@ -40,25 +42,26 @@ VANTAGE is a metadata-resistant chat and file-sharing system designed for hostil
 
 ## 🛡️ Security Architecture
 
-### 1. The Anonymity Layer (Tor)
+### 1. Hybrid Post-Quantum Encryption
+VANTAGE uses a defense-in-depth approach. Even if the classic Elliptic Curve cryptography is broken by a quantum computer, the secondary Quantum-Resistant layer remains secure.
+* **Layer 1 (Classic):** `Noise_XX_25519_ChaChaPoly_BLAKE2b` (Mutual Authentication).
+* **Layer 2 (Quantum):** `Kyber-1024` Key Encapsulation Mechanism (NIST PQC Winner).
+* **Rekeying:** The inner ChaCha20-Poly1305 cipher rotates keys based on the quantum shared secret.
+
+### 2. The Anonymity Layer (Tor)
 VANTAGE does not use IP addresses. It binds strictly to **Tor Hidden Services (v3 Onion Addresses)**.
 * **Location Hiding:** The physical location of the Hub is hidden from Clients, and Clients are hidden from the Hub.
 * **NAT Traversal:** Works behind strict firewalls and carrier-grade NAT without port forwarding.
 
-### 2. The Application Layer (Noise Protocol)
-Inside the Tor tunnel, VANTAGE establishes a second, independent encrypted tunnel using the **Noise Protocol Framework**.
-* **Handshake:** `Noise_XX_25519_ChaChaPoly_BLAKE2b` (Mutual Authentication).
-* **Zeroization:** Keys are wiped from memory immediately upon drop to prevent cold-boot attacks.
-
 ### 3. Traffic Analysis Resistance
 Standard encryption hides *what* you say, but not *how much* you say. VANTAGE defeats packet size analysis.
 * **Constant-Rate Padding:** Every packet (Chat, System, or File Chunk) is padded to exactly **4096 bytes**.
-* **Obfuscation:** An observer cannot distinguish between a text message and a file transfer segment.
+* **Obfuscation:** An observer cannot distinguish between a text message, a file transfer segment, or a heartbeat.
 
-### 4. Secure File Transfer
-* **Chunking:** Files are split into small encrypted chunks and interleaved with chat traffic.
-* **Consent First:** Files are never automatically downloaded. The receiver must explicitly authorize the download via the `/get` command.
-* **Sanitization:** Filenames are sanitized to prevent directory traversal attacks.
+### 4. Identity & Persistence
+* **Persistent Identities:** Users generate a keypair stored in `vantage.id`. This allows you to maintain your "Fingerprint" across sessions.
+* **Ephemeral Mode:** Use the `--temp` flag to generate a one-time identity that is destroyed upon exit.
+* **Zeroization:** Sensitive keys are wiped from memory immediately upon drop using the `zeroize` crate.
 
 ---
 
@@ -67,7 +70,7 @@ Standard encryption hides *what* you say, but not *how much* you say. VANTAGE de
 1.  **Tor Background Service:** (Must be running on system port 9050)
     * Debian/Ubuntu/Kali: `sudo apt install tor`
     * Arch: `sudo pacman -S tor`
-   
+    * *Ensure `SocksPort 9050` is enabled in your `torrc`.*
 
 2.  **Rust Toolchain:**
     * Install via: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
@@ -102,7 +105,7 @@ To host a chat group, you must configure a Tor Hidden Service on the server mach
 2.  **Restart Tor:**
     ```bash
     sudo systemctl enable tor
-    sudo systemctl start tor
+    sudo systemctl restart tor
     ```
 
 3.  **Get Your Onion Address:**
@@ -115,10 +118,10 @@ To host a chat group, you must configure a Tor Hidden Service on the server mach
 ## 🚀 Usage Guide
 
 ### 1. Start the Hub (Server)
-Run this on the machine hosting the Hidden Service.
+Run this on the machine hosting the Hidden Service. It will generate a `server.id` file automatically.
 
 ```bash
-./target/release/vantage server --port 7878
+./target/release/vantage server --port 7878 --identity server.id
 
 ```
 
@@ -126,13 +129,29 @@ Run this on the machine hosting the Hidden Service.
 
 ### 2. Connect a User (Client)
 
-Users connect using the Onion Address and the Hub's Fingerprint.
+Users connect using the Onion Address and the Hub's Fingerprint. You can specify a group channel (default is `#public`).
+
+**Option A: Persistent Identity (Recommended)**
 
 ```bash
 ./target/release/vantage client \
-  --address "your_onion_address.onion:7878" \
   --username "Alice" \
-  --peer-fingerprint "SERVER_FINGERPRINT_HERE"
+  --address "your_onion_address.onion:7878" \
+  --peer-fingerprint "SERVER_FINGERPRINT_HERE" \
+  --group "hackers" \
+  --identity alice.id
+
+```
+
+**Option B: Ephemeral Identity (Ghost Mode)**
+Using `--temp` generates a random identity that is never saved to disk.
+
+```bash
+./target/release/vantage client \
+  --username "Ghost" \
+  --address "your_onion_address.onion:7878" \
+  --peer-fingerprint "SERVER_FINGERPRINT_HERE" \
+  --temp
 
 ```
 
@@ -143,9 +162,9 @@ Once connected, you will see the VANTAGE Dashboard.
 | Command | Description |
 | --- | --- |
 | `Esc` | Quit VANTAGE safely. |
-| `/send <path>` | Offer a file to the group. |
+| `/send <path>` | Offer a file to the group. `Limit: (10 MB)` |
 | `/get <id>` | Accept and download a file. |
-| `/nuke or Ctrl + x`| Activate Kill switch|
+| `/nuke` or `Ctrl + x` | **PANIC:** Wipe identity file and downloads folder immediately. |
 | `/quit` | Disconnect. |
 
 ---
@@ -169,16 +188,19 @@ Bob wants the file. He types the ID shown in the offer:
 
 ```text
 /get 4921
+
 ```
 
-* **Result:** The system begins streaming the file securely.
+* **Result:** The system begins streaming the file securely using chunked, padded packets.
 
 **3. Download Complete**
-The file is saved automatically to the `downloads/` folder in your current directory.
+The file is saved automatically to the `downloads/` folder.
 
-> `✅ File Saved: downloads/secrets.bin`
- 
-*Why are files saved as .bin? Files are saved with generic IDs (e.g., file_8291.bin) as a security fail-safe to prevent Directory Traversal Attacks. VANTAGE ignores the remote filename during the write process to ensure a malicious peer cannot overwrite your system files (e.g., sending a file named ../../.bashrc). Users must manually rename files after verifying their safety.*
+> `✅ File Saved: downloads/secrets.pdf`
+
+*⚠️ Traffic Safety Limits (10 MB Cap)*
+
+VANTAGE enforces a strict **10 MB limit** on file transfers to ensure the stability and anonymity of the Tor circuit.
 
 ---
 
@@ -188,22 +210,22 @@ The file is saved automatically to the `downloads/` folder in your current direc
 
 * Is Tor running? `systemctl status tor`
 * Is Tor listening on port 9050? `ss -nltp | grep 9050`
+* If your Tor proxy is on a different port, use the `--proxy` flag:
+`./vantage client ... --proxy 127.0.0.1:9150`
 
 **Error: "Fingerprint Mismatch"**
 
 * **STOP.** The server you reached is NOT the one you expected. This indicates a potential Man-in-the-Middle attack or a typo in your command.
 
-**Where are my files?**
+**Panic! I need to delete everything.**
 
-* Check the `downloads` folder created where you ran the binary.
-
-
+* Press `Ctrl + x` inside the application. This executes the `nuke_everything` protocol, overwriting your identity file (`.id`) and `downloads/` folder with zeros before deleting them.
 
 ---
 
 ## 🤝 Contributing
 
-This project is open-source. Whether you want to add voice support, improve the TUI , or audit the crypto implementation, we welcome your pull requests!
+This project is open-source. Whether you want to add voice support, improve the TUI, or audit the crypto implementation, we welcome your pull requests!
 
 1. Fork the repository.
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
@@ -212,3 +234,6 @@ This project is open-source. Whether you want to add voice support, improve the 
 
 *Let's experience the cyberspace.*
 
+```
+
+```
