@@ -14,9 +14,19 @@ pub struct VantagePacket {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum WireMessage {
+    Heartbeat,
+    
     Join { 
-        username: String 
+        username: String,
+        did: String,
+        // ⭐ NEW: Group Handle (e.g., "#hackers")
+        group: String 
     },
+    // ⭐ NEW: Gossip Message (Server tells Client who else is here)
+    PeerList {
+        peers: Vec<String> 
+    },
+    
     Chat { 
         sender: String,
         content: String,
@@ -25,20 +35,22 @@ pub enum WireMessage {
     System {
         content: String
     },
-    // --- FILE TRANSFER PROTOCOL ---
-    // 1. Sender broadcasts this
+    PQInit {
+        public_key: Vec<u8> 
+    },
+    PQFinish {
+        ciphertext: Vec<u8> 
+    },
     FileOffer {
         sender: String,
         file_name: String,
         file_size: u64,
         id: u32,
     },
-    // 2. Receiver sends this to say "Yes"
     FileRequest {
         receiver: String,
         file_id: u32,
     },
-    // 3. Sender streams these
     FileChunk {
         file_id: u32,
         chunk_index: u32,
@@ -70,7 +82,7 @@ impl VantagePacket {
         if data.len() < PLAINTEXT_SIZE {
             data.resize(PLAINTEXT_SIZE, 0);
         } else if data.len() > PLAINTEXT_SIZE {
-            bail!("Packet exceeded max plaintext size");
+            data.truncate(PLAINTEXT_SIZE);
         }
         Ok(data)
     }
