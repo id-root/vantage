@@ -3,7 +3,7 @@
     <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
   </a>
   <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/version-3.1.0-black.svg" alt="Version 3.1.0">
+    <img src="https://img.shields.io/badge/version-3.0-black.svg" alt="Version 3.1.0">
   </a>
   <a href="https://github.com/id-root/vantage/actions">
     <img src="https://github.com/id-root/vantage/actions/workflows/rust.yml/badge.svg" alt="Build Status">
