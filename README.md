@@ -131,9 +131,26 @@ Run this on the machine hosting the Hidden Service. It will generate a `server.i
 ```bash
 ./target/release/vantage server --port 7878 --identity server.id
 ```
-*You will be prompted to set a password for the server identity.*
+*You will be prompted to set a password for the server identity.Then your sever will start*
 
-> `🚀 Server Online. Fingerprint: vKfD+dDX5BSKtkhP31YiL09tM0lopzuHvwZggc094=`
+```bash
+██╗   ██╗ █████╗ ███╗   ██╗████████╗ █████╗  ██████╗ ███████╗
+██║   ██║██╔══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔════╝ ██╔════╝
+██║   ██║███████║██╔██╗ ██║   ██║   ███████║██║  ███╗█████╗  
+╚██╗ ██╔╝██╔══██║██║╚██╗██║   ██║   ██╔══██║██║   ██║██╔══╝  
+ ╚████╔╝ ██║  ██║██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗
+  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+
+   ► VERSION: 3.1.0 (PQ+Features)
+   ► LISTEN : 127.0.0.1:7878
+   ► SERVER : KPWFhZHZ/#k#/#xfy#/87JWG#bJns#dv#WZl34bE9SM=
+   ► STATUS : ONLINE & SECURE
+──────────────────────────────────────────────────────────────
+
+09:46:40 127.0.0.1:42026 | 🟢 JOINED | BlackWidow @ Hydra
+09:48:44 127.0.0.1:42026 | 🔴 LEFT  | BlackWidow
+
+```
 
 ### 2. Connect a User (Client)
 
