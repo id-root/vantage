@@ -116,31 +116,16 @@ pub async fn run(
 ) -> Result<()> {
     fs::create_dir_all("downloads")?;
 
-    enable_raw_mode()?;
-    let mut stdout = std::io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
-
+    // MOVED IDENTITY LOADING TO THE TOP
+    // This runs in the standard terminal (before raw mode) so password input works cleanly.
     let id = if temp {
         Identity::generate("temp")?
     } else {
-        // Prompt for password
-        // Since we are in TUI mode soon, but here we haven't started TUI yet (enable_raw_mode called above).
-        // Wait, enable_raw_mode is called at the start of `run`.
-        // If we prompt here, it might be messy.
-        // We should prompt BEFORE `enable_raw_mode`.
-        // But `run` is called from `main.rs`.
-        // We should move `enable_raw_mode` down, or use `rpassword` which handles tty?
-        // `rpassword` reads from TTY. If raw mode is on, it might fail or behave weirdly.
-        // Better to disable raw mode temporarily or move enable_raw_mode later.
-        disable_raw_mode()?;
-        
         let path = std::path::Path::new(&identity);
         if path.exists() {
             println!("Enter identity password:");
+            // Reads from standard TTY securely without TUI interference
             let pass = rpassword::read_password()?;
-            enable_raw_mode()?; // Re-enable
             Identity::load(&identity, &pass)?
         } else {
             println!("Identity file not found. Creating new identity.");
@@ -151,12 +136,18 @@ pub async fn run(
             
             Identity::setup_dual(&identity, &pass_ops, &pass_casual)?;
             println!("Identity created. Logging in with REAL password...");
-            enable_raw_mode()?; // Re-enable
             Identity::load(&identity, &pass_ops)?
         }
     };
-    
-    // ⭐ FIX: Pass 'group' to AppState constructor
+
+    // NOW Initialize the TUI
+    enable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    // Pass 'group' to AppState constructor
     let mut app = AppState::new(username.clone(), id.fingerprint()[0..8].to_string(), group.clone());
     app.status = "CONNECTING...".to_string();
     if temp { app.add_log("⚠️ USING TEMP IDENTITY".to_string()); }
@@ -329,14 +320,19 @@ pub async fn run(
                 } else {
                     match key.code {
                         KeyCode::Enter => {
-                            let input: String = app.input.value().into();
-                            if !input.is_empty() {
-                                if input.trim() == "/browse" {
-                                    app.open_browser();
-                                    app.input.reset();
-                                } else {
-                                    let _ = tx_logic.send(InternalEvent::Input(input)).await;
-                                    app.input.reset();
+                            // [FIX] Support ALT+ENTER or SHIFT+ENTER for newlines
+                            if key.modifiers.contains(KeyModifiers::SHIFT) || key.modifiers.contains(KeyModifiers::ALT) {
+                                app.input.handle_event(&Event::Key(KeyCode::Char('\n').into()));
+                            } else {
+                                let input: String = app.input.value().into();
+                                if !input.is_empty() {
+                                    if input.trim() == "/browse" {
+                                        app.open_browser();
+                                        app.input.reset();
+                                    } else {
+                                        let _ = tx_logic.send(InternalEvent::Input(input)).await;
+                                        app.input.reset();
+                                    }
                                 }
                             }
                         },
