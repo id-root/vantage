@@ -32,3 +32,9 @@ unsigned-varint = "0.7" # For Multicodec prefixes
 pqcrypto-kyber = "0.8"
 pqcrypto-traits = "0.3.5"
 chacha20poly1305 = "0.10"
+audiopus = "0.2.0"
+cpal = "0.17.1"
+argon2 = { version = "0.5.3", features = ["std"] }
+rpassword = "7.4.0"
+textwrap = "0.16.2"
+syntect = "5.0"
