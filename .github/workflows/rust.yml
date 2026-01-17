@@ -18,7 +18,7 @@ jobs:
     
     # We only need these to COMPILE the code, not to run Tor.
     - name: Install System Dependencies
-      run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config build-essential
+      run: sudo apt-get update && sudo apt-get install -y libssl-dev pkg-config build-essential libasound2-dev
 
     - name: Build Project
       run: cargo build --release --verbose
