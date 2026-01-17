@@ -383,6 +383,7 @@ async fn handle_client(
                                     .unwrap_or(false)
                             },
                             WireMessage::FileOffer { sender, .. } => {
+                                 sender != &my_username &&
                                  state_inner.users.iter().find(|u| u.value().username == *sender)
                                     .map(|u| u.value().group == my_group)
                                     .unwrap_or(false)
