@@ -4,7 +4,6 @@ use crate::network::{connect_socks5, parse_onion_address, read_packet, write_pac
 use crate::HANDSHAKE_TIMEOUT_SEC;
 use crate::tui::{AppState, ui};
 
-use tokio::io::AsyncReadExt;
 use tokio::time::{timeout, Duration};
 use tokio::sync::mpsc;
 use std::sync::{Arc, Mutex};
@@ -451,7 +450,7 @@ pub async fn run(
                         
                         // Encode simulated audio
                         let pcm = simulate_audio_capture();
-                        let mut encoder = OpusEncoder::new(
+                        let encoder = OpusEncoder::new(
                             SampleRate::Hz48000,
                             Channels::Mono,
                             Application::Voip
