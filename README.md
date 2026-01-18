@@ -272,15 +272,8 @@ Users can send private messages that automatically disappear after a specified d
     - When the timer expires, the message is securely removed from the display buffer.
 -   **Usage**: Ideal for sharing sensitive credentials or one-time passcodes.
 
-### 4. Voice Support (Protocol Layer)
 
-The underlying protocol now supports `VoicePacket` for VoIP data.
-
--   **Codec**: Opus (via `audiopus`) is integrated into the dependency tree.
--   **Transport**: Audio frames are encapsulated in the constant-rate padded tunnel.
--   *Note*: Due to the high latency of Tor, this feature is experimental and best used for "Voice Notes" rather than real-time full-duplex calls.
-
-### 5. The Vault (Encrypted Storage)
+### 4. The Vault (Encrypted Storage)
 
 VANTAGE includes a built-in encrypted virtual filesystem (`vantage.vault`).
 
