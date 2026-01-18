@@ -33,6 +33,7 @@ VANTAGE is a metadata-resistant, post-quantum secure messaging system designed f
 * **💬 Group Channels:** Support for partitioned topics (e.g., `#ops`, `#general`).
 * **👻 Traffic Masking:** All traffic is wrapped in fake HTTP headers to evade DPI.
 * **🔐 Plausible Deniability:** Two passwords, two identities, one file.
+* **📁 The Vault:** Encrypted, hidden virtual filesystem for sensitive files.
 * **🚨 Panic Switch:** Instantly wipe keys and data with a single keystroke.
 
     </td>
@@ -197,7 +198,11 @@ Once connected, you will see the VANTAGE Dashboard.
 | `/send <path>` | Offer a file to the group. `Limit: (10 MB)` |
 | `/get <id>` | Accept and download a file. |
 | `/browse` | Open modal file browser. |
+| `/vault_put <file>` | Encrypt and move a local file into the Vault. |
+| `/vault_get <file>` | Decrypt and extract a file from the Vault. |
+| `/vault_list` | List contents of the encrypted Vault. |
 | `/msg <user> <text>` | Send a private message (DM) to a specific user. |
+| `/ttl <user> <seconds> <text>` | Send a self-destructing message (DM). |
 | `/kick <user>` | Kick a user (Admin only). |
 | `/ban <user>` | Ban a user (Admin only). |
 | `/nuke` or `Ctrl + x` | **PANIC:** Wipe identity file and downloads folder immediately. |
@@ -256,13 +261,32 @@ Users can send private messages to other users even if they are currently offlin
 -   **Storage**: If the target is offline, the message is stored in the server's ephemeral `Mailbox`.
 -   **Delivery**: When the target user joins the server, all pending messages are delivered immediately.
 
-### 3. Voice Support (Protocol Layer)
+### 3. Self-Destructing Messages (TTL)
+
+Users can send private messages that automatically disappear after a specified duration.
+
+-   **Command**: `/ttl <user> <seconds> <text>`
+-   **Functionality**: 
+    - The message is encrypted end-to-end.
+    - Once displayed on the recipient's screen, a countdown timer begins.
+    - When the timer expires, the message is securely removed from the display buffer.
+-   **Usage**: Ideal for sharing sensitive credentials or one-time passcodes.
+
+### 4. Voice Support (Protocol Layer)
 
 The underlying protocol now supports `VoicePacket` for VoIP data.
 
 -   **Codec**: Opus (via `audiopus`) is integrated into the dependency tree.
 -   **Transport**: Audio frames are encapsulated in the constant-rate padded tunnel.
 -   *Note*: Due to the high latency of Tor, this feature is experimental and best used for "Voice Notes" rather than real-time full-duplex calls.
+
+### 5. The Vault (Encrypted Storage)
+
+VANTAGE includes a built-in encrypted virtual filesystem (`vantage.vault`).
+
+-   **Encryption**: XChaCha20Poly1305 (256-bit key, 192-bit nonce).
+-   **Structure**: Single high-entropy file. No visible directory structure on disk.
+-   **Integration**: Use `/vault_put` to securely store downloaded files and `/vault_get` to retrieve them when safe.
 
 ---
 
