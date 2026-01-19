@@ -85,7 +85,7 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
     * Install via: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` (If you want to build from source)
   
 3. **Windows Prerequisites**
-   _If you are using it in windows you must install tor services on your system `Steps are given below`_
+   * _If you are using it in windows you must install tor services on your system `Steps are given below`_
 ---
 
 > **Note:**
