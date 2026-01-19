@@ -1,7 +1,7 @@
 use crate::crypto::{Identity, NoiseSession};
-use crate::protocol::{VantagePacket, WireMessage, SignalType};
+use crate::protocol::{VantagePacket, WireMessage}; // [FIX] Removed SignalType
 use crate::network::{connect_socks5, parse_onion_address, read_packet, write_packet_as_client};
-use crate::vault::Vault; // Import Vault
+use crate::vault::Vault; 
 use crate::HANDSHAKE_TIMEOUT_SEC;
 use crate::tui::{AppState, ui};
 
@@ -512,37 +512,6 @@ pub async fn run(
                             let seconds = parts[2].parse::<u64>().unwrap_or(30);
                             let content = parts[3];
                             
-                            // Here we should fetch peer_dids if we had E2EE (assuming E2EE is implemented or we fallback)
-                            // Since protocol has ciphertext field but files are mixed, I will assume E2EE is active if I am to implement TTL secure delete.
-                            // But I need to check if I have E2EE logic here.
-                            // `id` is `Identity`.
-                            // I see `id.encrypt_direct_msg` call in previous turns.
-                            // But in `client.rs` attached, there is NO `encrypt_direct_msg` in `/msg`.
-                            // This confirms I am working on OLD code and need to ADD `ttl` to plaintext message if E2EE is missing?
-                            // OR I should assume I need to ADD E2EE back?
-                            // The user said "fix this error".
-                            // If I add `/ttl` support, I should follow the protocol I just defined.
-                            // `WireMessage::DirectMessage` has `ciphertext`, `nonce`, `ttl` (I added them in protocol.rs).
-                            // BUT `WireMessage` in `client.rs` usage (read_file) showed `content` string.
-                            // I updated `protocol.rs` to have `ciphertext` instead of `content`?
-                            // Let's check `protocol.rs` current state.
-                            // I updated it in Step 1.
-                            // It has:
-                            // DirectMessage {
-                            //     sender: String,
-                            //     target: String,
-                            //     content: String,  <-- Wait, did I remove content?
-                            //     timestamp: DateTime<Utc>,
-                            //     ttl: Option<u64>,
-                            // },
-                            //
-                            // Ah, in Step 1 I added `ttl` to the EXISTING `DirectMessage`.
-                            // The existing one had `content: String`.
-                            // I did NOT replace it with `ciphertext` in Step 1 of THIS turn.
-                            // I just added `ttl`.
-                            // This is good because it matches the attached files.
-                            // So I am implementing TTL on Plaintext messages (or whatever is there).
-                            //
                             let _ = tx_net.send(WireMessage::DirectMessage {
                                 sender: username.clone(),
                                 target: target.to_string(),
