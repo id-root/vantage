@@ -86,6 +86,9 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
 
 ---
 
+> **Note:**
+> If you don't want to build from source you can download the executables for Windows and linux here [release](https://github.com/id-root/vantage/releases/tag/v.3.0.0)
+
 ## 📦 Build from source
 
 1.  **Clone & Build:**
@@ -120,7 +123,7 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
 - Then start tor `net start tor`
 - Verify the tor connection `curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org` (Optional)
 
-  Now you are ready to use `vantage.exe`
+  Now you are ready to use `vantage-windows-amd64.exe` Download from here [release](https://github.com/id-root/vantage/releases/tag/v.3.0.0)
 
 
 ## ⚙️ Hub Configuration (Server)
