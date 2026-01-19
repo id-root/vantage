@@ -74,7 +74,7 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
 
 ---
 
-## 🛠️ Prerequisites
+## 🛠️ Prerequisites 
 
 1.  **Tor Background Service:** (Must be running on system port 9050)
     * Debian/Ubuntu/Kali: `sudo apt install tor`
@@ -86,7 +86,7 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
 
 ---
 
-## 📦 Installation
+## 📦 Build from source
 
 1.  **Clone & Build:**
     ```bash
@@ -100,6 +100,28 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
     `./target/release/vantage`
 
 ---
+
+## 📦 Windows tor installation
+**Install the tor service on Windows**
+- Install tor expert bunder from here [Tor Expert Bundle](https://archive.torproject.org/tor-package-archive/torbrowser/15.0.4/tor-expert-bundle-windows-x86_64-15.0.4.tar.gz)
+- Then extract the bundle using `tar -xzf tor-expert-bundle-windows-x86_64-15.0.4.tar.gz`
+- Then move the extracted tor directory to `C:\tor`
+- Then create a torrc file and add these lines into the file
+  ```c
+  SocksPort 9050
+  ControlPort 9051
+  CookieAuthentication 1
+  DataDirectory C:\Tor\data
+  ```
+  _Make sure you don't forget to create the data directory_
+- Then run this command on tor directory `tor.exe -f torrc` and wait till it reaches `Bootstrap (100) Done`
+- Then install NSSM  (service manager) from here [Nssm](https://nssm.cc/download)
+- Then extract it and then install tor `nssm.exe install tor` a graphical UI will appear then select the tor.exe from C:/tor and then click install
+- Then start tor `net start tor`
+- Verify the tor connection `curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org` (Optional)
+
+  Now you are ready to use `vantage.exe`
+
 
 ## ⚙️ Hub Configuration (Server)
 
