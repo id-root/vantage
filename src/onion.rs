@@ -1,3 +1,5 @@
+#![allow(dead_code)] // [FIX] Suppress unused code warnings for WIP module
+
 use rand::rngs::OsRng;
 use x25519_dalek::{PublicKey as DhPublicKey, StaticSecret};
 use chacha20poly1305::{ChaCha20Poly1305, Key, AeadCore, aead::{Aead, KeyInit}};
