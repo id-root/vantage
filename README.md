@@ -111,7 +111,7 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
 - Install tor expert bunder from here [Tor Expert Bundle](https://archive.torproject.org/tor-package-archive/torbrowser/15.0.4/tor-expert-bundle-windows-x86_64-15.0.4.tar.gz)
 - Then extract the bundle using `tar -xzf tor-expert-bundle-windows-x86_64-15.0.4.tar.gz`
 - Then move the extracted tor directory to `C:\tor`
-- Then create a torrc file and add these lines into the file
+- Then create a `torrc` file and add these lines into the file
   ```c
   SocksPort 9050
   ControlPort 9051
@@ -120,15 +120,12 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
   ```
   _Make sure you don't forget to create the data directory_
 - Then run this command on tor directory `tor.exe -f torrc` and wait till it reaches `Bootstrap (100) Done`
-- Then install NSSM  (service manager) from here [Nssm](https://nssm.cc/download)
-- Then extract it and then install tor `nssm.exe install tor` a graphical UI will appear then select the tor.exe from C:/tor and then click install
-- Then start tor `net start tor`
 - Verify the tor connection `curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org` (Optional)
 
-  Now you are ready to use `vantage-windows-amd64.exe` Download from here [release](https://github.com/id-root/vantage/releases/tag/v.3.0.0)
+  Now you are ready to use `vantage-windows-amd64.exe` (Download from here [release](https://github.com/id-root/vantage/releases/tag/v.3.0.0))
 
 
-## ⚙️ Hub Configuration (Server)
+## ⚙️ Hub Configuration (Server) (Linux)
 
 To host a chat group, you must configure a Tor Hidden Service on the server machine.
 
@@ -149,7 +146,36 @@ To host a chat group, you must configure a Tor Hidden Service on the server mach
     sudo cat /var/lib/tor/vantage_hub/hostname
     ```
 
+
+## ⚙️ Hub Configuration (Server) (Windows)
+
+To host a chat group, you must configure a Tor Hidden Service on the server machine.
+1. **Create hidden service directory inside tor directory**
+   ```bash
+   #move to tor directory then
+   mkdir hidden_services
+   cd hidden_services
+   mkdir vantage_hub
+   ```
+   
+2. **Edit Tor config (`C:\tor\torrc`):**
+    ```bash
+    HiddenServiceDir C:\Tor\hidden_services\vantage_hub
+    HiddenServicePort 7878 127.0.0.1:7878
+    ```
+3. **Restart tor**
+    ```bash
+    tor.exe -f torrc
+    ```
+   After it reaches `Bootstrap (100) Done` move to next step
+
+5. **Get Your Onion Address**
+   ```bash
+   type C:\Tor\hidden_services\vantage_hub\hostname
+   ```
+   _Then share that address with your clients/users_
 ---
+
 
 ## 🚀 Usage Guide
 
@@ -160,6 +186,8 @@ Run this on the machine hosting the Hidden Service. It will generate a `server.i
 ./target/release/vantage server --port 7878 --identity server.id
 ```
 *You will be prompted to set a password for the server identity.Then your sever will start*
+> **Note:**
+> _Share the fingerprint that server generated to your user/clients_
 
 ```bash
 ██╗   ██╗ █████╗ ███╗   ██╗████████╗ █████╗  ██████╗ ███████╗
