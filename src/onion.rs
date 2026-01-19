@@ -1,4 +1,4 @@
-#![allow(dead_code)] // [FIX] Suppress unused code warnings for WIP module
+#![allow(dead_code)]
 
 use rand::rngs::OsRng;
 use x25519_dalek::{PublicKey as DhPublicKey, StaticSecret};
