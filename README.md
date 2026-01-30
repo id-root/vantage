@@ -114,7 +114,7 @@ Real-time operational metrics for situational awareness.
 
 
 > **Note:**
-> If you don't want to build from source you can download the executables for Windows and linux here [release](https://github.com/id-root/vantage/isotope/tag/v.3.0.0)
+> If you don't want to build from source you can download the executables for Windows and linux here [release](https://github.com/id-root/isotope/tag/)
 
 ### Build from Source
 ```bash
