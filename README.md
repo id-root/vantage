@@ -179,12 +179,13 @@ When creating an identity (`.id`), you must set **two** passwords:
 
 ---
 
-## 🧪 Verification
-ISOTOPE runs comprehensive integration tests ensuring cryptographic integrity.
-```bash
-# Run Security Suite
-cargo test
-```
+## 🤝 Contributing
 
----
-*Disclaimer: This software is provided "as is" for educational and research purposes. Use responsibly.*
+This project is open-source. We welcome your pull requests!
+
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes.
+4. Open a Pull Request.
+
+*Let's experience the cyberspace.*
