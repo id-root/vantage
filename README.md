@@ -1,110 +1,93 @@
 <p align="center">
-  <a href="https://www.rust-lang.org/">
-    <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
-  </a>
-  <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/version-3.0-black.svg" alt="Version 3.1.0">
-  </a>
-  <a href="https://github.com/id-root/vantage/actions">
-    <img src="https://github.com/id-root/vantage/actions/workflows/rust.yml/badge.svg" alt="Build Status">
-  </a>
-  <a href="https://github.com/id-root/vantage">
-    <img src="https://img.shields.io/badge/Security-Post--Quantum-blueviolet" alt="Security Status">
-  </a>
-  <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/License-MIT-black.svg" alt="License: MIT">
-  </a>
+  <img src="https://img.shields.io/badge/Made%20with-Rust-black.svg" alt="Made with Rust">
+  <img src="https://img.shields.io/badge/version-4.0.0-black.svg" alt="Version 4.0.0">
+  <img src="https://img.shields.io/badge/Security-Post--Quantum-blueviolet" alt="Security Status">
+  <img src="https://img.shields.io/badge/License-MIT-black.svg" alt="License: MIT">
 </p>
 
-# VANTAGE
-<table>
-  <tr>
-    <td width="280" align="right">
-      <img src="logo.png" width="280" alt="VANTAGE Logo">
-    </td>
-    <td>
+# ISOTOPE (formerly Vantage)
 
-### **Verifiable Adversary-Resistant Network Transport & Group Exchange**
 
-VANTAGE is a metadata-resistant, post-quantum secure messaging system designed for hostile network environments. It routes all traffic exclusively through **Tor Onion Services** and secures it with a hybrid cryptographic stack combining **Noise Protocol** and **Kyber-1024**.
+ISOTOPE is a metadata-resistant, post-quantum secure messaging system designed for **hostile network environments**. It routes all traffic exclusively through **Tor Onion Services** and secures it with a defense-in-depth hybrid cryptographic stack.
 
-* **🛡️ Post-Quantum Security:** Native Kyber-1024 Key Encapsulation.
-* **🧅 Tor Native:** Operates exclusively over Tor Hidden Services.
-* **💬 Group Channels:** Support for partitioned topics (e.g., `#ops`, `#general`).
-* **👻 Traffic Masking:** All traffic is wrapped in fake HTTP headers to evade DPI.
-* **🔐 Plausible Deniability:** Two passwords, two identities, one file.
-* **📁 The Vault:** Encrypted, hidden virtual filesystem for sensitive files.
-* **🚨 Panic Switch:** Instantly wipe keys and data with a single keystroke.
-
-    </td>
-  </tr>
-</table>
+Unlike standard secure messengers, ISOTOPE is built for **operational security (OPSEC)**, offering plausible deniability, anti-forensics, and a TUI designed for rapid situational awareness.
 
 ---
 
 ## 🛡️ Security Architecture
 
 ### 1. Hybrid Post-Quantum Encryption
-VANTAGE uses a defense-in-depth approach. Even if the classic Elliptic Curve cryptography is broken by a quantum computer, the secondary Quantum-Resistant layer remains secure.
-* **Layer 1 (Classic):** `Noise_XX_25519_ChaChaPoly_BLAKE2b` (Mutual Authentication).
-* **Layer 2 (Quantum):** `Kyber-1024` Key Encapsulation Mechanism (NIST PQC Winner).
-* **Rekeying:** The inner ChaCha20-Poly1305 cipher rotates keys based on the quantum shared secret.
+ISOTOPE uses a defense-in-depth "hybrid" model to protect against Store-Now-Decrypt-Later (SNDL) attacks.
+*   **Layer 1 (Classic):** `Noise_XX_25519_ChaChaPoly_BLAKE2b` (Authenticated Key Exchange).
+*   **Layer 2 (Post-Quantum):** `Kyber-1024` Key Encapsulation Mechanism (NIST PQC Winner).
+*   **Key Rotation:** Session keys rotate every 100 messages or 5 minutes (Double Ratchet inspired).
 
-### 2. The Anonymity Layer (Tor)
-VANTAGE does not use IP addresses. It binds strictly to **Tor Hidden Services (v3 Onion Addresses)**.
-* **Location Hiding:** The physical location of the Hub is hidden from Clients, and Clients are hidden from the Hub.
-* **NAT Traversal:** Works behind strict firewalls and carrier-grade NAT without port forwarding.
+### 2. Operational Security (OPSEC) features
+*   **A2: Dead Man's Switch:**
+    *   Automatic data wiping after **5 minutes of inactivity**.
+    *   Triggers **MAYDAY Protocol**: Broadcasts a silent distress signal to all peers before destruction.
+*   **A3: Hidden Volumes (TrueCrypt-style):**
+    *   **Outer Password:** Unlocks "decoy" data partition.
+    *   **Inner Password:** Unlocks "real" high-security partition.
+    *   Mathematically impossible to prove the inner volume exists.
+*   **T1: Cover Traffic:**
+    *   Sends constant-rate dummy packets every 2-8 seconds to mask message timing.
+*   **T2: Multi-Hop Onion Routing:**
+    *   Chains multiple SOCKS5 proxies for defense-in-depth anonymity.
+*   **C3: Deniable Authentication:**
+    *   Uses **Ring Signatures** to authenticate group membership without revealing identity.
+*   **D1: Anomaly Detection:**
+    *   Behavioral profiling (typing speed, session times) detects if an account is compromised.
 
-### 3. Traffic Analysis Resistance
-Standard encryption hides *what* you say, but not *how much* you say. VANTAGE defeats packet size analysis and Deep Packet Inspection (DPI).
-* **Constant-Rate Padding:** Every packet (Chat, System, or File Chunk) is padded to exactly **4096 bytes** internally.
-* **Protocol Mimicry (Obfuscation):** All packets are wrapped in fake HTTP/1.1 headers.
-  * **Client -> Server:** Appears as `POST /api/v1/analytics/report` (Fake Analytics).
-  * **Server -> Client:** Appears as `HTTP/1.1 200 OK` (Fake Success Response).
-* **Indistinguishability:** To an observer, the traffic looks like innocuous web analytics data.
-
-### 4. Identity & Plausible Deniability ("Blue/Red Login")
-VANTAGE implements a **Dual-Slot Identity System** to protect operatives under duress.
-* **One File, Two Profiles:** The identity file (`vantage.id`) is a fixed-size blob containing two encrypted slots.
-* **Argon2 Protection:** Keys are derived from your password using the memory-hard Argon2 algorithm.
-* **Behavior:**
-    * **Password A (OPS):** Unlocks your real identity (e.g., Fingerprint `ABC...`).
-    * **Password B (CASUAL):** Unlocks a completely different, dummy identity (e.g., Fingerprint `XYZ...`).
-* **Forensic Safety:** It is mathematically impossible to prove the existence of the second slot without the password.
+### 3. Anti-Forensics
+*   **Secure Memory:** All sensitive keys and buffers are zeroized (overwritten) on drop.
+*   **Panic Switch:** `Ctrl+X` or `/nuke` instantly wipes keys, deletes the identity file, and shreds local data.
 
 ---
 
-## 🛠️ Prerequisites 
+## 💻 TUI & User Interface (New in Phase 5)
 
-1.  **Tor Background Service:** (Must be running on system port 9050)
-    * Debian/Ubuntu/Kali: `sudo apt install tor`
-    * Arch: `sudo pacman -S tor`
-    * *Ensure `SocksPort 9050` is enabled in your `torrc`.*
+ISOTOPE v4.0.0 features a professional-grade Terminal User Interface (TUI) with a modular tabbed layout.
 
-2.  **Rust Toolchain:**
-    * Install via: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh` (If you want to build from source)
-  
+### **Navigation Controls**
+| Key | Action |
+|:---:|:---|
+| `Tab` | Cycle Panel Focus (**Input** -> **Chat** -> **Operatives**) |
+| `Alt+Right` | Next Tab (`COMMS` -> `VAULT` -> `INTEL`) |
+| `Alt+Left` | Previous Tab |
+| `?` | Toggle Help Overlay |
+| `Esc` | Cancel / Close Modals |
+
+### **1. [COMMS] Tab**
+The main workspace for secure communication.
+*   **Chat Window:** Syntax-highlighted messages. Code blocks are automatically formatted.
+*   **Input:** Type `/` to see available commands.
+*   **Operative List:** Real-time visibility of online peers.
+
+### **2. [INTEL] Dashboard (HUD)**
+Real-time operational metrics for situational awareness.
+*   **Network Graphs:** Live upload/download traffic visualization (Sparklines).
+*   **Status Panel:**
+    *   **CIPHER:** `KYBER-1024` (Green = Secure).
+    *   **IDENTITY:** `Ghost @ Ops` (Shows current persona).
+    *   **UPTIME:** Session duration.
+    *   **RAM:** Secure memory usage.
+
+---
+
+## 🛠️ Installation
+
+### Linux 
+1.  **Tor Service** (Port 9050)
+    *   Linux: `sudo apt install tor && sudo systemctl start tor`
+    
+2.  **Rust Toolchain**
+    *   [Install Rust](https://rustup.rs/)
+
 3. **Windows Prerequisites**
    * _If you are using it in windows you must install tor services on your system `Steps are given below`_
 ---
 
-> **Note:**
-> If you don't want to build from source you can download the executables for Windows and linux here [release](https://github.com/id-root/vantage/releases/tag/v.3.0.0)
-
-## 📦 Build from source
-
-1.  **Clone & Build:**
-    ```bash
-    git clone https://github.com/id-root/vantage.git
-    cd vantage
-    cargo build --release
-    ```
-
-2.  **Locate Binary:**
-    The executable is optimized and located at:
-    `./target/release/vantage`
-
----
 
 ## 📦 Windows tor installation
 **Install the tor service on Windows**
@@ -122,248 +105,78 @@ VANTAGE implements a **Dual-Slot Identity System** to protect operatives under d
 - Then run this command on tor directory `tor.exe -f torrc` and wait till it reaches `Bootstrap (100) Done`
 - Verify the tor connection `curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org` (Optional)
 
-  Now you are ready to use `vantage-windows-amd64.exe` (Download from here [release](https://github.com/id-root/vantage/releases/tag/v.3.0.0))
 
+> **Note:**
+> If you don't want to build from source you can download the executables for Windows and linux here [release](https://github.com/id-root/vantage/isotope/tag/v.3.0.0)
 
-## ⚙️ Hub Configuration (Server) (Linux)
+### Build from Source
+```bash
+git clone https://github.com/id-root/isotope.git
+cd isotope
+cargo build --release
+```
+Location: `./target/release/isotope`
 
-To host a chat group, you must configure a Tor Hidden Service on the server machine.
-
-1.  **Edit Tor Config (`/etc/tor/torrc`):**
-    ```text
-    HiddenServiceDir /var/lib/tor/vantage_hub/
-    HiddenServicePort 7878 127.0.0.1:7878
-    ```
-
-2.  **Restart Tor:**
-    ```bash
-    sudo systemctl enable tor
-    sudo systemctl restart tor
-    ```
-
-3.  **Get Your Onion Address:**
-    ```bash
-    sudo cat /var/lib/tor/vantage_hub/hostname
-    ```
-
-
-## ⚙️ Hub Configuration (Server) (Windows)
-
-To host a chat group, you must configure a Tor Hidden Service on the server machine.
-1. **Create hidden service directory inside tor directory**
-   ```bash
-   #move to tor directory then
-   mkdir hidden_services
-   cd hidden_services
-   mkdir vantage_hub
-   ```
-   
-2. **Edit Tor config (`C:\tor\torrc`):**
-    ```bash
-    HiddenServiceDir C:\Tor\hidden_services\vantage_hub
-    HiddenServicePort 7878 127.0.0.1:7878
-    ```
-3. **Restart tor**
-    ```bash
-    tor.exe -f torrc
-    ```
-   After it reaches `Bootstrap (100) Done` move to next step
-
-5. **Get Your Onion Address**
-   ```bash
-   type C:\Tor\hidden_services\vantage_hub\hostname
-   ```
-   _Then share that address with your clients/users_
 ---
-
 
 ## 🚀 Usage Guide
 
-### 1. Start the Hub (Server)
-Run this on the machine hosting the Hidden Service. It will generate a `server.id` file automatically.
-
+### 1. Start Hub (Server)
 ```bash
-./target/release/vantage server --port 7878 --identity server.id
+./isotope server --port 7878 --identity server.id
 ```
-*You will be prompted to set a password for the server identity.Then your sever will start*
-> **Note:**
-> _Share the fingerprint that server generated to your user/clients_
+*   Share the **Onion Address** & **Fingerprint** with your team.
 
+### 2. Connect Client
+**Persistent Identity (Recommended):**
 ```bash
-██╗   ██╗ █████╗ ███╗   ██╗████████╗ █████╗  ██████╗ ███████╗
-██║   ██║██╔══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔════╝ ██╔════╝
-██║   ██║███████║██╔██╗ ██║   ██║   ███████║██║  ███╗█████╗  
-╚██╗ ██╔╝██╔══██║██║╚██╗██║   ██║   ██╔══██║██║   ██║██╔══╝  
- ╚████╔╝ ██║  ██║██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗
-  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-
-   ► VERSION: 3.1.0 (PQ+Features)
-   ► LISTEN : 127.0.0.1:7878
-   ► SERVER : KPWFhZHZ/#k#/#xfy#/87JWG#bJns#dv#WZl34bE9SM=
-   ► STATUS : ONLINE & SECURE
-──────────────────────────────────────────────────────────────
-
-09:46:40 127.0.0.1:42026 | 🟢 JOINED | BlackWidow @ Hydra
-09:48:44 127.0.0.1:42026 | 🔴 LEFT  | BlackWidow
-
-```
-
-### 2. Connect a User (Client)
-
-Users connect using the Onion Address and the Hub's Fingerprint. You can specify a group channel (default is `#public`).
-
-**Option A: Persistent Identity (Recommended)**
-
-```bash
-./target/release/vantage client \
-  --username "Alice" \
-  --address "your_onion_address.onion:7878" \
-  --peer-fingerprint "SERVER_FINGERPRINT_HERE" \
-  --group "hackers" \
-  --identity alice.id
-```
-
-**First Run Setup:**
-If `alice.id` does not exist, VANTAGE will ask you to create one:
-1.  **Set REAL Password:** Use this for your actual operations.
-2.  **Set DURESS Password:** Use this if forced to decrypt your device. It will unlock a harmless "Casual" profile.
-
-**Subsequent Logins:**
-* Enter **Real Password** -> Logs in as `Alice (Ops)`.
-* Enter **Duress Password** -> Logs in as `Alice (Casual)`.
-
-**Option B: Ephemeral Identity (Ghost Mode)**
-Using `--temp` generates a random identity that is never saved to disk.
-
-```bash
-./target/release/vantage client \
+./isotope client \
   --username "Ghost" \
-  --address "your_onion_address.onion:7878" \
-  --peer-fingerprint "SERVER_FINGERPRINT_HERE" \
+  --address "onion_address.onion:7878" \
+  --peer-fingerprint "SERVER_FINGERPRINT" \
+  --identity ghost.id
+```
+
+**Ephemeral Mode (No Trace):**
+```bash
+./isotope client \
+  --username "Ghost" \
+  --address "onion_address.onion:7878" \
+  --peer-fingerprint "SERVER_FINGERPRINT" \
   --temp
 ```
 
-### 3. TUI Controls & Commands
+### 3. Identity Setup (Blue/RedPill)
+When creating an identity (`.id`), you must set **two** passwords:
+1.  **REAL Password:** Logs into your standard operational profile.
+2.  **DURESS Password:** Logs into a "Casual" decoy profile.
+    *   *Safe to provide if forced. Checks out perfectly but reveals nothing.*
 
-Once connected, you will see the VANTAGE Dashboard.
+---
+
+## ⚡ Command Reference
 
 | Command | Description |
-| --- | --- |
-| `Esc` | Quit VANTAGE safely. |
-| `/send <path>` | Offer a file to the group. `Limit: (10 MB)` |
-| `/get <id>` | Accept and download a file. |
-| `/browse` | Open modal file browser. |
-| `/vault_put <file>` | Encrypt and move a local file into the Vault. |
-| `/vault_get <file>` | Decrypt and extract a file from the Vault. |
-| `/vault_list` | List contents of the encrypted Vault. |
-| `/msg <user> <text>` | Send a private message (DM) to a specific user. |
-| `/ttl <user> <seconds> <text>` | Send a self-destructing message (DM). |
-| `/kick <user>` | Kick a user (Admin only). |
-| `/ban <user>` | Ban a user (Admin only). |
-| `/nuke` or `Ctrl + x` | **PANIC:** Wipe identity file and downloads folder immediately. |
-| `/quit` | Disconnect. |
+| :--- | :--- |
+| `/msg <user> <txt>` | Direct Message (DM). |
+| `/ttl <user> <sec> <txt>` | **Self-Destructing Message**. |
+| `/send <file>` | Secure file transfer (encrypted/padded). |
+| `/get <id>` | Download offered file. |
+| `/browse` | Open interactive file picker for uploads. |
+| `/vault_put <file>` | Move file to **Hidden Vault**. |
+| `/vault_get <file>` | Extract file from **Hidden Vault**. |
+| `/nuke` | **PANIC PROTOCOL:** Send distress signal + Wipe Data. |
+| `Ctrl+c` | Safe Quit. |
+| `Ctrl+x` | **PANIC PROTOCOL** (Instant). |
 
 ---
 
-## 📎 File Transfer Guide
-
-VANTAGE uses an **Offer/Accept** model for security.
-
-**1. Sender Offers a File**
-Alice wants to send a photo. She types:
-
-```text
-/send /home/alice/secrets.pdf
+## 🧪 Verification
+ISOTOPE runs comprehensive integration tests ensuring cryptographic integrity.
+```bash
+# Run Security Suite
+cargo test
 ```
 
-* **Result:** The group sees: `📎 Alice offered 'secrets.pdf' (ID: 4921).`
-
-**2. Receiver Accepts the File**
-Bob wants the file. He types the ID shown in the offer:
-
-```text
-/get 4921
-```
-
-* **Result:** The system begins streaming the file securely using chunked, padded packets wrapped in fake HTTP traffic.
-
-**3. Download Complete**
-The file is saved automatically to the `downloads/` folder.
-
-> `✅ File Saved: downloads/secrets.pdf`
-
-*⚠️ Traffic Safety Limits (10 MB Cap)*
-
-VANTAGE enforces a strict **10 MB limit** on file transfers to ensure the stability and anonymity of the Tor circuit.
-
 ---
-
-## 🛠 Advanced Features
-
-### 1. Group Admin Controls
-
-Users can now execute administrative actions (`/kick` and `/ban`) if they are authorized admins.
-
--   **Authorization**: The server operator (local identity) is automatically an admin.
--   **Kick**: Sends a command to the target user (or broadcasts it) causing them to be disconnected.
--   **Ban**: Adds the user to a blacklist on the server, preventing future `Join` attempts.
-
-### 2. Offline Mailbox (Direct Messages)
-
-Users can send private messages to other users even if they are currently offline.
-
--   **Routing**: If the target user is online, the message is routed directly.
--   **Storage**: If the target is offline, the message is stored in the server's ephemeral `Mailbox`.
--   **Delivery**: When the target user joins the server, all pending messages are delivered immediately.
-
-### 3. Self-Destructing Messages (TTL)
-
-Users can send private messages that automatically disappear after a specified duration.
-
--   **Command**: `/ttl <user> <seconds> <text>`
--   **Functionality**: 
-    - The message is encrypted end-to-end.
-    - Once displayed on the recipient's screen, a countdown timer begins.
-    - When the timer expires, the message is securely removed from the display buffer.
--   **Usage**: Ideal for sharing sensitive credentials or one-time passcodes.
-
-
-### 4. The Vault (Encrypted Storage)
-
-VANTAGE includes a built-in encrypted virtual filesystem (`vantage.vault`).
-
--   **Encryption**: XChaCha20Poly1305 (256-bit key, 192-bit nonce).
--   **Structure**: Single high-entropy file. No visible directory structure on disk.
--   **Integration**: Use `/vault_put` to securely store downloaded files and `/vault_get` to retrieve them when safe.
-
----
-
-## ❓ Troubleshooting
-
-**Error: Connection failed / SOCKS5 error**
-
-* Is Tor running? `systemctl status tor`
-* Is Tor listening on port 9050? `ss -nltp | grep 9050`
-* If your Tor proxy is on a different port, use the `--proxy` flag:
-`./vantage client ... --proxy 127.0.0.1:9150`
-
-**Error: "Fingerprint Mismatch"**
-
-* **STOP.** The server you reached is NOT the one you expected. This indicates a potential Man-in-the-Middle attack or a typo in your command.
-
-**Panic! I need to delete everything.**
-
-* Press `Ctrl + x` inside the application. This executes the `nuke_everything` protocol, overwriting your identity file (`.id`) and `downloads/` folder with zeros before deleting them.
-
----
-
-## 🤝 Contributing
-
-This project is open-source. Whether you want to add voice support, improve the TUI, or audit the crypto implementation, we welcome your pull requests!
-
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes.
-4. Open a Pull Request.
-
-*Let's experience the cyberspace.*
+*Disclaimer: This software is provided "as is" for educational and research purposes. Use responsibly.*
