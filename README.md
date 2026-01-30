@@ -19,6 +19,7 @@ Unlike standard secure messengers, ISOTOPE is built for **operational security (
    </td>
   </tr>
 </table>
+
 ---
 
 ## 🛡️ Security Architecture
