@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/License-MIT-black.svg" alt="License: MIT">
 </p>
 
-# ISOTOPE (formerly Vantage)
+# ISOTOPE 
 <table>
   <tr>
     <td width="280" align="right">
