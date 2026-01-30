@@ -6,12 +6,19 @@
 </p>
 
 # ISOTOPE (formerly Vantage)
-
+<table>
+  <tr>
+    <td width="280" align="right">
+      <img src="logo.png" width="280" alt="VANTAGE Logo">
+    </td>
+    <td>
 
 ISOTOPE is a metadata-resistant, post-quantum secure messaging system designed for **hostile network environments**. It routes all traffic exclusively through **Tor Onion Services** and secures it with a defense-in-depth hybrid cryptographic stack.
 
 Unlike standard secure messengers, ISOTOPE is built for **operational security (OPSEC)**, offering plausible deniability, anti-forensics, and a TUI designed for rapid situational awareness.
-
+   </td>
+  </tr>
+</table>
 ---
 
 ## 🛡️ Security Architecture
